@@ -855,7 +855,7 @@ open class PhotoBrowserVideoCell: PreviewVideoControlViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public override func layoutSubviews() {
+    open override func layoutSubviews() {
         super.layoutSubviews()
         sliderView.frame = CGRect(
             x: 0,
