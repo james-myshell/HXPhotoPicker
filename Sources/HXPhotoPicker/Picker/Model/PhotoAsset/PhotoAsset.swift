@@ -67,6 +67,9 @@ open class PhotoAsset: Equatable {
     
     /// 图片/视频尺寸大小
     public var imageSize: CGSize {
+        if let placeHolderImg {
+            return placeHolderImg.size
+        }
         if let editedImageSize {
             return editedImageSize
         }
