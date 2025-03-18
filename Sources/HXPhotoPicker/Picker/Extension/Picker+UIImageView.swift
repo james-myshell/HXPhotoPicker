@@ -100,7 +100,11 @@ extension UIImageView {
                     }
                     placeholderImage = UIImage.image(for: imageAsset.placeholder)
                 }else {
-                    placeholderImage = image
+                    if asset.placeHolderImg != nil {
+                        placeholderImage = asset.placeHolderImg
+                    } else {
+                        placeholderImage = image
+                    }
                     url = imageAsset.originalURL
                     cacheKey = imageAsset.originalCacheKey
                 }

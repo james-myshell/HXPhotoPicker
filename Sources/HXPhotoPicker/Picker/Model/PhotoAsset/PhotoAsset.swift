@@ -27,6 +27,8 @@ open class PhotoAsset: Equatable {
     /// 媒体子类型
     public var mediaSubType: MediaSubType = .image
     
+    public var placeHolderImg: UIImage?
+    
     #if HXPICKER_ENABLE_EDITOR
     /// 编辑之后的数据
     public var editedResult: EditedResult? { didSet { pFileSize = nil } }

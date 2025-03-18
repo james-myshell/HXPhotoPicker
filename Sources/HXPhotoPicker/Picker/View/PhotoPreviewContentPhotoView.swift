@@ -38,6 +38,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
     
     var loadingView: PhotoHUDProtocol?
     var isProgressHUD: Bool = false
+    var loading = UIImageView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,6 +49,11 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
         imageView = ImageView()
         imageView.size = size
         addSubview(imageView)
+        
+        loading.image = UIImage(named: "Loading")
+        loading.frame = CGRect(origin: center, size: CGSize(width: 40, height: 40))
+        loading.isHidden = true
+        addSubview(loading)
     }
     
     func updateContent() {
@@ -231,6 +237,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
     override func layoutSubviews() {
         super.layoutSubviews()
         imageView.frame = bounds
+        loading.center = CGPoint(x: bounds.width / 2, y: bounds.height / 2)
     }
     
     deinit {
@@ -239,6 +246,80 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func startRotationAnimation(duration: CFTimeInterval = 1.0, repeatCount: Float = Float.infinity, clockwise: Bool = true) {
+        loading.isHidden = false
+        // 移除当前可能存在的动画
+        loading.layer.removeAnimation(forKey: "rotationAnimation")
+        
+        // 创建基础动画
+        let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation.z")
+        
+        // 设置起始值和结束值（顺时针旋转一周是2π弧度）
+        rotationAnimation.fromValue = 0.0
+        rotationAnimation.toValue = clockwise ? 2 * Double.pi : -2 * Double.pi
+        
+        // 设置动画属性
+        rotationAnimation.duration = duration
+        rotationAnimation.repeatCount = repeatCount
+        rotationAnimation.isRemovedOnCompletion = false
+        rotationAnimation.fillMode = .forwards
+        rotationAnimation.timingFunction = CAMediaTimingFunction(name: .linear)
+        
+        // 将动画添加到层
+        loading.layer.add(rotationAnimation, forKey: "rotationAnimation")
+    }
+    
+    /// 停止旋转动画
+    func stopRotationAnimation() {
+        loading.layer.removeAnimation(forKey: "rotationAnimation")
+        loading.isHidden = true
+    }
+    
+    func applyBlurEffect(image: UIImage, style: UIBlurEffect.Style = .light, intensity: CGFloat = 0.5) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        
+        let context = CIContext(options: nil)
+        let inputImage = CIImage(cgImage: cgImage)
+        
+        // 使用CIGaussianBlur滤镜
+        guard let filter = CIFilter(name: "CIGaussianBlur") else { return nil }
+        filter.setValue(inputImage, forKey: kCIInputImageKey)
+        // 设置模糊半径，范围0-100
+        let radius = intensity * 10.0
+        filter.setValue(radius, forKey: kCIInputRadiusKey)
+        
+        // 获取输出图像
+        guard let outputImage = filter.outputImage,
+              let outputCGImage = context.createCGImage(outputImage, from: inputImage.extent) else {
+            return nil
+        }
+        
+        // 创建UIImage
+        let blurredImage = UIImage(cgImage: outputCGImage, scale: image.scale, orientation: image.imageOrientation)
+        
+        // 使用UIVisualEffectView添加毛玻璃效果
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        
+        if let context = UIGraphicsGetCurrentContext() {
+            // 绘制模糊后的图像
+            blurredImage.draw(in: CGRect(origin: .zero, size: image.size))
+            
+            // 创建毛玻璃效果视图
+            let blurEffect = UIBlurEffect(style: style)
+            let blurView = UIVisualEffectView(effect: blurEffect)
+            blurView.frame = CGRect(origin: .zero, size: image.size)
+            blurView.alpha = intensity
+            
+            // 将毛玻璃视图渲染到上下文
+            blurView.drawHierarchy(in: CGRect(origin: .zero, size: image.size), afterScreenUpdates: true)
+        }
+        
+        let resultImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return resultImage
     }
 }
 
@@ -270,39 +351,61 @@ extension PhotoPreviewContentPhotoView {
                 showLoadingView(text: nil)
             }
         }
-        imageTask = imageView.setImage(
-            for: photoAsset,
-            urlType: .original,
-            forciblyOriginal: loadOriginal
-        ) { [weak self] (receivedData, totolData) in
-            guard let self = self else { return }
-            if self.photoAsset.mediaSubType != .networkVideo {
-                let percentage = Double(receivedData) / Double(totolData)
-                self.updateProgress(progress: percentage, isICloud: false)
-            }
-        } downloadTask: { [weak self] downloadTask in
-            self?.imageTask = downloadTask
-        } completionHandler: { [weak self] (image, _, photoAsset) in
-            guard let self = self else { return }
-            completion?(photoAsset)
-            if isLoaclLivePhoto {
-                if let image = image {
-                    self.updateContentSize(image: image)
+        
+        if photoAsset.placeHolderImg == nil {
+            startRotationAnimation()
+            UIImageView().setImage(
+                for: photoAsset,
+                urlType: .thumbnail,
+                progressBlock: nil,
+                downloadTask: nil
+            ) { [weak self] (image, _, photoAsset) in
+                guard let self = self else { return }
+                if let image {
+                    self.photoAsset.placeHolderImg = applyBlurEffect(image: image)
                 }
-                return
+                requestOriginalImg()
             }
-            if self.photoAsset.mediaSubType != .networkVideo {
-                self.requestNetworkCompletion = true
-                if let image = image {
-                    self.requestSucceed()
-                    self.updateContentSize(image: image)
-                    self.delegate?.contentView(networkImagedownloadSuccess: self)
+        } else {
+            requestOriginalImg()
+        }
+        
+        func requestOriginalImg() {
+            imageTask = imageView.setImage(
+                for: photoAsset,
+                urlType: .original,
+                forciblyOriginal: loadOriginal
+            ) { [weak self] (receivedData, totolData) in
+                guard let self = self else { return }
+                if self.photoAsset.mediaSubType != .networkVideo {
+                    let percentage = Double(receivedData) / Double(totolData)
+                    self.updateProgress(progress: percentage, isICloud: false)
+                }
+            } downloadTask: { [weak self] downloadTask in
+                self?.imageTask = downloadTask
+            } completionHandler: { [weak self] (image, _, photoAsset) in
+                guard let self = self else { return }
+                self.stopRotationAnimation()
+                completion?(photoAsset)
+                if isLoaclLivePhoto {
+                    if let image = image {
+                        self.updateContentSize(image: image)
+                    }
+                    return
+                }
+                if self.photoAsset.mediaSubType != .networkVideo {
+                    self.requestNetworkCompletion = true
+                    if let image = image {
+                        self.requestSucceed()
+                        self.updateContentSize(image: image)
+                        self.delegate?.contentView(networkImagedownloadSuccess: self)
+                    }else {
+                        self.requestFailed(info: nil, isICloud: false)
+                    }
                 }else {
-                    self.requestFailed(info: nil, isICloud: false)
-                }
-            }else {
-                if let image = image {
-                    self.updateContentSize(image: image)
+                    if let image = image {
+                        self.updateContentSize(image: image)
+                    }
                 }
             }
         }
