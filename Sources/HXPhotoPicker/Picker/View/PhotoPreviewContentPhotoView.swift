@@ -50,7 +50,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
         imageView.size = size
         addSubview(imageView)
         
-        loading.image = UIImage(named: "Loading")
+        loading.image = UIImage.image(for: "loading")
         loading.frame = CGRect(origin: center, size: CGSize(width: 40, height: 40))
         loading.isHidden = true
         addSubview(loading)
