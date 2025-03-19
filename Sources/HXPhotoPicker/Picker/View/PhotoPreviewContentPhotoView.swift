@@ -50,7 +50,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
         imageView.size = size
         addSubview(imageView)
         
-        loading.image = UIImage.image(for: "loading")
+        loading.image = UIImage.image(for: "Loading")
         loading.frame = CGRect(origin: center, size: CGSize(width: 40, height: 40))
         loading.isHidden = true
         addSubview(loading)
@@ -363,6 +363,7 @@ extension PhotoPreviewContentPhotoView {
                 guard let self = self else { return }
                 if let image {
                     self.photoAsset.placeHolderImg = applyBlurEffect(image: image)
+                    self.updateContentSize(image: image)
                 }
                 requestOriginalImg()
             }
