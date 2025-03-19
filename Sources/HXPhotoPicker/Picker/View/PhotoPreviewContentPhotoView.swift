@@ -277,49 +277,33 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
         loading.isHidden = true
     }
     
-    func applyBlurEffect(image: UIImage, style: UIBlurEffect.Style = .light, intensity: CGFloat = 0.5) -> UIImage? {
+    func applyBlurEffect(image: UIImage, style: UIBlurEffect.Style = .light, intensity: CGFloat = 2.5) -> UIImage? {
         guard let cgImage = image.cgImage else { return nil }
         
         let context = CIContext(options: nil)
         let inputImage = CIImage(cgImage: cgImage)
         
-        // 使用CIGaussianBlur滤镜
-        guard let filter = CIFilter(name: "CIGaussianBlur") else { return nil }
-        filter.setValue(inputImage, forKey: kCIInputImageKey)
-        // 设置模糊半径，范围0-100
-        let radius = intensity * 10.0
-        filter.setValue(radius, forKey: kCIInputRadiusKey)
+        // 首先使用 CIAffineClamp 处理边缘
+        let clampFilter = CIFilter(name: "CIAffineClamp")
+        clampFilter?.setValue(inputImage, forKey: kCIInputImageKey)
+        let transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+        clampFilter?.setValue(NSValue(cgAffineTransform: transform), forKey: kCIInputTransformKey)
         
-        // 获取输出图像
-        guard let outputImage = filter.outputImage,
+        guard let clampedImage = clampFilter?.outputImage else { return nil }
+        
+        // 然后应用高斯模糊
+        guard let blurFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+        blurFilter.setValue(clampedImage, forKey: kCIInputImageKey)
+        let radius = intensity * 10.0
+        blurFilter.setValue(radius, forKey: kCIInputRadiusKey)
+        
+        // 获取输出图像并裁剪到原始尺寸
+        guard let outputImage = blurFilter.outputImage?.cropped(to: inputImage.extent),
               let outputCGImage = context.createCGImage(outputImage, from: inputImage.extent) else {
             return nil
         }
         
-        // 创建UIImage
-        let blurredImage = UIImage(cgImage: outputCGImage, scale: image.scale, orientation: image.imageOrientation)
-        
-        // 使用UIVisualEffectView添加毛玻璃效果
-        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
-        
-        if let context = UIGraphicsGetCurrentContext() {
-            // 绘制模糊后的图像
-            blurredImage.draw(in: CGRect(origin: .zero, size: image.size))
-            
-            // 创建毛玻璃效果视图
-            let blurEffect = UIBlurEffect(style: style)
-            let blurView = UIVisualEffectView(effect: blurEffect)
-            blurView.frame = CGRect(origin: .zero, size: image.size)
-            blurView.alpha = intensity
-            
-            // 将毛玻璃视图渲染到上下文
-            blurView.drawHierarchy(in: CGRect(origin: .zero, size: image.size), afterScreenUpdates: true)
-        }
-        
-        let resultImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return resultImage
+        return UIImage(cgImage: outputCGImage, scale: image.scale, orientation: image.imageOrientation)
     }
 }
 
