@@ -73,7 +73,9 @@ extension UIImageView {
                     placeholderImage = UIImage.image(for: imageAsset.placeholder)
                 }
                 let processor: DownsamplingImageProcessor
-                if imageAsset.thumbnailSize.equalTo(.zero) {
+                if let img = asset.placeHolderImg, img.size != .zero {
+                    processor = .init(size: img.size)
+                } else if imageAsset.thumbnailSize.equalTo(.zero) {
                     processor = .init(size: size)
                 }else {
                     processor = .init(size: imageAsset.thumbnailSize)

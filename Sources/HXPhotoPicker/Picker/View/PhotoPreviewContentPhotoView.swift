@@ -201,7 +201,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
     }
     
     func showLoadingView(text: String?) {
-        loadingView = PhotoManager.HUDView.showProgress(with: text?.localized, progress: 0, animated: true, addedTo: hudSuperview)
+//        loadingView = PhotoManager.HUDView.showProgress(with: text?.localized, progress: 0, animated: true, addedTo: hudSuperview)
         isProgressHUD = true
     }
     
