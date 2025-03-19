@@ -21,7 +21,10 @@ Pod::Spec.new do |spec|
     end
     
     spec.subspec 'Resources' do |resources|
-        resources.resources          = "Sources/HXPhotoPicker/Resources/*.{bundle}"
+        resources.resources = [
+            "Sources/HXPhotoPicker/Resources/*.{bundle}",
+            "swift/Assets/*.{png,jpg,jpeg,gif}" # 添加这行来包含图片资源
+        ]
         resources.resource_bundle    = { 'HXPhotoPicker_Privacy' => ['Sources/HXPhotoPicker/Resources/PrivacyInfo.xcprivacy']}
     end
     
