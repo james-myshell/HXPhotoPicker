@@ -370,7 +370,9 @@ extension PhotoPreviewContentPhotoView {
                 self?.imageTask = downloadTask
             } completionHandler: { [weak self] (image, _, photoAsset) in
                 guard let self = self else { return }
-                self.stopRotationAnimation()
+                if image != nil {
+                    self.stopRotationAnimation()
+                }
                 completion?(photoAsset)
                 if isLoaclLivePhoto {
                     if let image = image {

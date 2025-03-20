@@ -239,9 +239,7 @@ class PhotoPreviewVideoView: VideoPlayerView {
     private func playerItemDidPlayToEndTimeNotification(notifi: Notification) {
         stopPlay()
         player.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
-        if videoPlayType == .auto {
-            startPlay()
-        }
+        startPlay()
     }
     
     private func addedPlayerObservers() {

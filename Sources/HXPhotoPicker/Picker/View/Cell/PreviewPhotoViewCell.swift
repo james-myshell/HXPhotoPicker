@@ -34,4 +34,10 @@ class PreviewPhotoViewCell: PhotoPreviewViewCell, PhotoPreviewContentViewDelete 
     func contentView(networkImagedownloadFailed contentView: PhotoPreviewContentViewProtocol) {
         delegate?.photoCell(networkImagedownloadFailed: self)
     }
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        scrollContentView.cancelRequest()
+        scrollContentView.imageView.image = nil
+    }
 }
