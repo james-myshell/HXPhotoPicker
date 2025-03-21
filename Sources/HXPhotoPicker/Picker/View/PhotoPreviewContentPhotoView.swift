@@ -149,7 +149,7 @@ class PhotoPreviewContentPhotoView: UIView, PhotoPreviewContentViewProtocol {
     
     func cancelRequest() {
         guard let photoAsset = photoAsset else { return }
-        cancelImageTask()
+        // cancelImageTask()
         if !isPeek {
             photoAsset.playerTime = 0
         }
