@@ -286,6 +286,17 @@ public protocol PhotoPickerControllerDelegate: AnyObject {
         atIndex: Int
     )
     
+    /// 预览界面双击操作
+    /// - Parameters:
+    ///   - pickerController: 对应的 PhotoPickerController
+    ///   - photoAsset: 对应显示的 PhotoAsset 数据
+    ///   - atIndex: 对应显示的位置
+    func pickerController(
+        _ pickerController: PhotoPickerController,
+        previewDoubleClick photoAsset: PhotoAsset,
+        atIndex: Int
+    )
+    
     /// 预览界面长按操作
     /// - Parameters:
     ///   - pickerController: 对应的 PhotoPickerController
@@ -665,6 +676,12 @@ public extension PhotoPickerControllerDelegate {
     func pickerController(
         _ pickerController: PhotoPickerController,
         previewSingleClick photoAsset: PhotoAsset,
+        atIndex: Int
+    ) { }
+    
+    func pickerController(
+        _ pickerController: PhotoPickerController,
+        previewDoubleClick photoAsset: PhotoAsset,
         atIndex: Int
     ) { }
     

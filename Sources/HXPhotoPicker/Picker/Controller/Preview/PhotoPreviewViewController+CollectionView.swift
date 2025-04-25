@@ -157,13 +157,11 @@ extension PhotoPreviewViewController: UICollectionViewDelegate {
 
 // MARK: PhotoPreviewViewCellDelegate
 extension PhotoPreviewViewController: PhotoPreviewViewCellDelegate {
-    func cell(requestSucceed cell: PhotoPreviewViewCell) {
-        delegate?.previewViewController(self, requestSucceed: cell.photoAsset)
-    }
-    func cell(requestFailed cell: PhotoPreviewViewCell) {
-        delegate?.previewViewController(self, requestFailed: cell.photoAsset)
-    }
-    func cell(singleTap cell: PhotoPreviewViewCell) {
+    
+    private func changeStatusBar(_ hidden: Bool, cell: PhotoPreviewViewCell) {
+        guard statusBarShouldBeHidden != hidden else {
+            return
+        }
         guard let navigationController = navigationController else {
             return
         }
@@ -174,8 +172,7 @@ extension PhotoPreviewViewController: PhotoPreviewViewCellDelegate {
             at: currentPreviewIndex) {
             return
         }
-        let isHidden = navigationController.navigationBar.isHidden
-        statusBarShouldBeHidden = !isHidden
+        statusBarShouldBeHidden = hidden
         if self.modalPresentationStyle == .fullScreen ||
             pickerController.splitViewController?.modalPresentationStyle == .fullScreen {
             navigationController.setNeedsStatusBarAppearanceUpdate()
@@ -223,12 +220,38 @@ extension PhotoPreviewViewController: PhotoPreviewViewCellDelegate {
                 self.navBgView?.isHidden = self.statusBarShouldBeHidden
             }
         }
+    }
+    
+    func cell(requestSucceed cell: PhotoPreviewViewCell) {
+        delegate?.previewViewController(self, requestSucceed: cell.photoAsset)
+    }
+    func cell(requestFailed cell: PhotoPreviewViewCell) {
+        delegate?.previewViewController(self, requestFailed: cell.photoAsset)
+    }
+    func cell(singleTap cell: PhotoPreviewViewCell) {
+        guard let navigationController = navigationController else {
+            return
+        }
+        let isHidden = navigationController.navigationBar.isHidden
+        changeStatusBar(!isHidden, cell: cell)
+        
         pickerController.pickerDelegate?.pickerController(
             pickerController,
             previewSingleClick: cell.photoAsset,
             atIndex: currentPreviewIndex
         )
     }
+    
+    func cell(doubleTap cell: PhotoPreviewViewCell) {
+        changeStatusBar(true, cell: cell)
+        
+        pickerController.pickerDelegate?.pickerController(
+            pickerController,
+            previewDoubleClick: cell.photoAsset,
+            atIndex: currentPreviewIndex
+        )
+    }
+    
     func cell(longPress cell: PhotoPreviewViewCell) {
         pickerController.pickerDelegate?.pickerController(
             pickerController,

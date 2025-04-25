@@ -13,6 +13,7 @@ import ImageIO
 
 protocol PhotoPreviewViewCellDelegate: AnyObject {
     func cell(singleTap cell: PhotoPreviewViewCell)
+    func cell(doubleTap cell: PhotoPreviewViewCell)
     func cell(longPress cell: PhotoPreviewViewCell)
     func cell(requestSucceed cell: PhotoPreviewViewCell)
     func cell(requestFailed cell: PhotoPreviewViewCell)
@@ -158,6 +159,8 @@ open class PhotoPreviewViewCell: UICollectionViewCell, UIScrollViewDelegate {
         delegate?.cell(singleTap: self)
     }
     @objc func doubleTap(tap: UITapGestureRecognizer) {
+        delegate?.cell(doubleTap: self)
+        
         if scrollView.zoomScale > 1 {
             scrollView.setZoomScale(1, animated: true)
         }else {
