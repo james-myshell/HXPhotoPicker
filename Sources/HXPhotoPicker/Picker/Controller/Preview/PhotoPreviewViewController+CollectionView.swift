@@ -159,9 +159,6 @@ extension PhotoPreviewViewController: UICollectionViewDelegate {
 extension PhotoPreviewViewController: PhotoPreviewViewCellDelegate {
     
     private func changeStatusBar(_ hidden: Bool, cell: PhotoPreviewViewCell) {
-        guard statusBarShouldBeHidden != hidden else {
-            return
-        }
         guard let navigationController = navigationController else {
             return
         }
